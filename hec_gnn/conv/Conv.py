@@ -55,6 +55,8 @@ class HECConv(MessagePassing):
                                 size=size)
             tmp_out = conv(tmp_out)
             out = out + tmp_out
+        
+        # extract central node feature in the previous layer, i.e., hv(k-1)
         x_r = x[1]
         if x_r is not None:
             out += self.lin_r(x_r)
