@@ -10,6 +10,7 @@ import os
 import __init__
 from utils import dataloader
 from hec_gnn.conv.Conv import HECConv
+from hec_gnn.conv.Conv import HECGATConv
 from utils.base_func import mape_loss,list_of_groups,split_dataset,generate_dataset,label_norm,lase_direction_enhance,masked_edge_index,masked_edge_attr,get_mean_and_std_overall,norm_overall
 # os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 import torch
@@ -24,21 +25,42 @@ from torch_geometric.data import Data
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn import ASAPooling, LEConv, global_mean_pool, global_add_pool, global_max_pool, JumpingKnowledge,SAGEConv
 
+import pdb
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 base_data_set = ["atax.pt","bicg.pt","mvt.pt","gemm.pt","gemver.pt","syrk.pt","syr2k.pt","k2mm.pt","k3mm.pt","ABC_1.pt","ABx_1.pt","AB_1.pt","Ax_1.pt"]
 new_base_data_set = ["aA.pt","aAB.pt","aABplusbBC.pt","aAplusbB.pt","aAx.pt","AB_1.pt","AB_2.pt","ABC_1.pt","ABplusAC.pt","ABplusC.pt","ABplusCD.pt","ABx_1.pt","ABx_2.pt","AplusB.pt","Ax_1.pt","xy_1.pt"]
 
 
+
+
 class HECConvNet(nn.Module):
     def __init__(self, in_channels, hidden_channels, num_layers, dim, 
-        overall_dim = 0, use_overall: bool = False, batch_norm: bool = False,drop_out = 0.5,pool_aggr = "add",overall_dim_large = 128,relations = 4,aggregate = "add",simple_JK = "last"):
+        overall_dim = 0, use_overall: bool = False, batch_norm: bool = False,
+        drop_out = 0.5,pool_aggr = "add",overall_dim_large = 128,relations = 4,
+        aggregate = "add",simple_JK = "last", num_heads = 1):
+
+       # pdb.set_trace()
+
         super(HECConvNet, self).__init__()
         self.num_layers = num_layers
         self.convs = nn.ModuleList()
-        for i in range(num_layers):
-            in_channels = in_channels if i == 0 else hidden_channels
-            self.convs.append(HECConv(in_channels, hidden_channels,dim,num_relation=relations,aggr=aggregate))
+        #self.bns = nn.ModuleList()
+
+        # first layer
+        self.convs.append(HECGATConv(in_channels, hidden_channels,dim,num_relations=relations,heads=num_heads, dropout=drop_out))
+        #self.bns.append(nn.BatchNorm1d(hidden_channels * num_heads))
+        
+        for i in range(1, num_layers-1):
+            #in_channels = in_channels if i == 0 else hidden_channels
+            #self.convs.append(HECConv(in_channels, hidden_channels,dim,num_relation=relations,aggr=aggregate))
+            self.convs.append(HECGATConv(hidden_channels * num_heads, hidden_channels,dim,num_relations=relations,heads=num_heads, dropout=drop_out))
+            #self.bns.append(nn.BatchNorm1d(hidden_channels * num_heads))
+
+        # output GAT layer
+        self.convs.append(HECGATConv(hidden_channels * num_heads, hidden_channels,dim,num_relations=relations,heads=1, dropout=drop_out))
+
         if use_overall:
             self.fc1 = Linear(hidden_channels+overall_dim_large , hidden_channels).cuda()
             self.fc2 = Linear(hidden_channels, 1).cuda()
