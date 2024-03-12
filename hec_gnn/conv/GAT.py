@@ -41,9 +41,11 @@ class HECGATConv(MessagePassing):
             self.relation_att.append(nn.Linear(2 * out_channels, num_heads, bias=False))
         
         # 
-        self.lin_
-        self.lin_r = nn.Linear(in_channels[1], out_channels * num_heads, bias=False)
+        self.lin_l = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)
+        self.lin_r = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)
         
+        self.lin_src = nn.Linear(in_channels[1], out_channels * num_heads, bias=False)
+
         # used to map edge features into the same dimension as node features
         self.attr_fc = nn.Linear(dim, in_channels[1], bias=False)
         
@@ -97,21 +99,24 @@ class HECGATConv(MessagePassing):
         
         return out
     
+    # x_i is the source/central node feature, x_j is the target node feature
+    # 
+
     def message(self, edge_index, x_i, x_j, edge_weight, relation_idx):
         # x_j = self.relation_weight[relation_idx](x_j).view(-1, self.num_heads, self.out_channels)
         # if edge_weight_i is not None:
         #     edge_weight_i = edge_weight_i.view(-1, 1, 1)
         #     x_j = edge_weight_i * x_j
         
-        
+        H,C = self.num_heads, self.out_channels
         
         pdb.set_trace()
         
         
         # apply relational weight (linear layer) to the edge embeddings, as well as target and source node embeddings
-        edge_weight_msg = self.relation_weight[relation_idx](msg).view(-1, self.num_heads, self.out_channels)
-        x_i_msg = 
-        x_j_msg =    
+        edge_weight_msg = self.relation_weight[relation_idx](msg).view(-1, H, C)
+        x_i_msg = self.lin_l(x_i).view(-1, H, C)
+        x_j_msg = self.lin_r(x_j).view(-1, H, C)
 
         # use edge attributes as message
         if edge_weight is not None:
