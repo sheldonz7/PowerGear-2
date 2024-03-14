@@ -20,8 +20,20 @@ from utils.base_func import masked_edge_index,masked_edge_attr
 import pdb
 
 class HECGATConv(MessagePassing):
-    def __init__(self, in_channels: Union[int, Tuple[int,int]], out_channels: int, dim=1, num_relations=1,
-                 num_heads=1, concat=True, dropout=0.6, bias=True, **kwargs):
+    def __init__(
+        self,
+        in_channels: Union[int, Tuple[int,int]],
+        out_channels: int,
+        node_dim: int = 1,
+        edge_dim: Optional[int] = None, 
+        num_relations: int = 1,
+        num_heads: int = 1,
+        concat=True,
+        dropout=0.6,
+        bias: bool = True,
+        **kwargs):
+        
+        
         super(HECGATConv, self).__init__(aggr='add', **kwargs)
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -36,19 +48,27 @@ class HECGATConv(MessagePassing):
         self.relation_weight = nn.ModuleList()
         self.relation_att = nn.ModuleList()
         
+        self.att_weights = nn.ParameterList()
+
         for i in range(num_relations):
             self.relation_weight.append(nn.Linear(in_channels[0], out_channels * num_heads, bias=False))
-            self.relation_att.append(nn.Linear(2 * out_channels, num_heads, bias=False))
+            self.att_weights.append(nn.Parameter(torch.Tensor(1, num_heads, out_channels)))
         
-        # 
+
+        # linear layers for source and target node features transformation
         self.lin_l = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)
-        self.lin_r = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)
+        # self.lin_r = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)
+        self.lin_r = self.lin_l
         
-        self.lin_src = nn.Linear(in_channels[1], out_channels * num_heads, bias=False)
+        if edge_dim is not None
+        self.lin_edge = nn.Linear(in_channels[1], out_channels * num_heads, bias=False)
 
         # used to map edge features into the same dimension as node features
         self.attr_fc = nn.Linear(dim, in_channels[1], bias=False)
         
+
+
+
         if bias and concat:
             self.bias = nn.Parameter(torch.Tensor(num_heads * out_channels))
         elif bias and not concat:
