@@ -38,7 +38,7 @@ def feature_extract(prj_name, kernel_name, run_dir, out_dir, tb_dir):
     os.system('./../ir_revise/build/bin/ir_revise {a} ./{e}/{b}/info/a.o.3.bc {c}/{d}/ir_revise/annotated.bc {c}/{d}/preprocess/cop_node_dict.txt {c}/{d}/ir_revise/operand_info.txt 2> {c}/{d}/ir_revise/log_ir_revise.txt'.format(
         a = kernel_name, b = prj_name, c = out_dir, d = prj_name, e = kernel_name))
     os.system('mkdir {}/{}/act_trace'.format(out_dir, prj_name))
-    os.system('clang++ -c {a}/{b}/ir_revise/annotated.bc -o {a}/{b}/act_trace/annotated.o'.format(a = out_dir, b = prj_name))
+    os.system('clang++-11 -fPIC -c {a}/{b}/ir_revise/annotated.bc -o {a}/{b}/act_trace/annotated.o'.format(a = out_dir, b = prj_name))
     os.system('/usr/bin/c++ -fopenmp -O3 -fPIC -std=c++11 -o {a}/{b}/act_trace/main.o -c {c}/io{d}/main.cpp'.format(a = out_dir, b = prj_name, c = tb_dir, d = iob))
     os.system('/usr/bin/c++ -fopenmp -O3 -fPIC -std=c++11 -o {a}/{b}/act_trace/act_trace {a}/{b}/act_trace/main.o {a}/{b}/act_trace/annotated.o {c}/act_trace/build/rtlop_tracer.o {c}/act_trace/build/tracer.o'.format(a=out_dir, b=prj_name, c=run_dir))
     os.system('{a}/{b}/act_trace/act_trace {a}/{b}/act_trace node > {a}/{b}/act_trace/act_trace.log'.format(a = out_dir, b = prj_name))
@@ -46,7 +46,7 @@ def feature_extract(prj_name, kernel_name, run_dir, out_dir, tb_dir):
     print('##### Step 3: annotate IR for edge and trace activities #####')
     os.system('./../ir_revise/build/bin/ir_revise {a} ./{e}/{b}/info/a.o.3.bc {c}/{d}/ir_revise/annotated.bc {c}/{d}/preprocess/cop_edge_dict.txt 2> {c}/{d}/ir_revise/log_ir_revise_edge_trace.txt'.format(
         a = kernel_name, b = prj_name, c = out_dir, d = prj_name, e = kernel_name))
-    os.system('clang++ -c {a}/{b}/ir_revise/annotated.bc -o {a}/{b}/act_trace/annotated.o'.format(a=out_dir, b=prj_name))
+    os.system('clang++-11 -fPIC -c {a}/{b}/ir_revise/annotated.bc -o {a}/{b}/act_trace/annotated.o'.format(a=out_dir, b=prj_name))
     os.system('/usr/bin/c++ -fopenmp -O3 -fPIC -std=c++11 -o {a}/{b}/act_trace/main.o -c {c}/io{d}/main.cpp'.format(a=out_dir, b=prj_name, c=tb_dir, d=iob))
     os.system('/usr/bin/c++ -fopenmp -O3 -fPIC -std=c++11 -o {a}/{b}/act_trace/act_trace {a}/{b}/act_trace/main.o {a}/{b}/act_trace/annotated.o {c}/act_trace/build/rtlop_tracer.o {c}/act_trace/build/tracer.o'.format(a=out_dir, b=prj_name, c=run_dir))
     os.system('{a}/{b}/act_trace/act_trace {a}/{b}/act_trace edge > {a}/{b}/act_trace/act_trace.log'.format(a = out_dir, b = prj_name))

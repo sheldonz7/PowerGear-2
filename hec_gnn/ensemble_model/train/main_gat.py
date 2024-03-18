@@ -23,7 +23,7 @@ from torch_sparse import SparseTensor, matmul
 from torch_geometric.data import Data
 from torch_geometric.nn.conv import MessagePassing, GATConv
 from torch_geometric.nn import ASAPooling, LEConv, global_mean_pool, global_add_pool, global_max_pool, JumpingKnowledge,SAGEConv
-
+import pdb
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -32,10 +32,10 @@ new_base_data_set = ["aA.pt","aAB.pt","aABplusbBC.pt","aAplusbB.pt","aAx.pt","AB
 
 
 class HECConvNet(nn.Module):
-    def __init__(self, in_channels, hidden_channels, num_layers, dim, 
+    def __init__(self, in_channels, hidden_channels, num_layers, edge_dim, 
         overall_dim = 0, use_overall: bool = False, batch_norm: bool = False,
         drop_out = 0.5,pool_aggr = "add",overall_dim_large = 128,relations = 4,
-        aggregate = "add",simple_JK = "last", num_heads = 1, edge_dim = 1):
+        aggregate = "add",simple_JK = "last", num_heads = 1):
 
         super(HECConvNet, self).__init__()
         self.num_layers = num_layers
@@ -49,11 +49,11 @@ class HECConvNet(nn.Module):
         for i in range(1, num_layers-1):
             #in_channels = in_channels if i == 0 else hidden_channels
             #self.convs.append(HECConv(in_channels, hidden_channels,dim,num_relation=relations,aggr=aggregate))
-            self.convs.append(GATConv(hidden_channels * num_heads, hidden_channels,dim,num_relations=relations,num_heads=num_heads, dropout=drop_out))
+            self.convs.append(GATConv(hidden_channels * num_heads, hidden_channels, heads=num_heads, dropout=drop_out, edge_dim = edge_dim))
             #self.bns.append(nn.BatchNorm1d(hidden_channels * num_heads))
 
         # output GAT layer
-        self.convs.append(GATConv(hidden_channels * num_heads, hidden_channels,dim,num_relations=relations,num_heads=1, dropout=drop_out))
+        self.convs.append(GATConv(hidden_channels * num_heads, hidden_channels, heads=1,concat=False, dropout=drop_out, edge_dim = edge_dim))
         
         if use_overall:
             self.fc1 = Linear(hidden_channels+overall_dim_large , hidden_channels).cuda()

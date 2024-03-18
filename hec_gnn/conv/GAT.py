@@ -1,5 +1,5 @@
 import imp
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 import numpy as np
 import pandas as pd
 import __init__
@@ -24,14 +24,19 @@ class HECGATConv(MessagePassing):
         self,
         in_channels: Union[int, Tuple[int,int]],
         out_channels: int,
-        node_dim: int = 1,
-        edge_dim: Optional[int] = None, 
-        num_relations: int = 1,
         num_heads: int = 1,
-        concat=True,
-        dropout=0.6,
+        dim ,
+        edge_dim: Optional[int] = None,
+        negative_slope: float = 0.2,
+        num_relations: int = 1,
+        add_self_loops: bool = True,
+        concat: bool = True,
+        dropout: float = 0.6,
         bias: bool = True,
-        **kwargs):
+        fill_value: Union[float, Tensor, str] = 'mean',
+        share_weights: bool = False,
+        **kwargs
+    ):
         
         
         super(HECGATConv, self).__init__(aggr='add', **kwargs)
@@ -41,12 +46,19 @@ class HECGATConv(MessagePassing):
         self.num_relations = num_relations
         self.num_heads = num_heads
         self.dropout = dropout
+        self.concat = concat
+        self.negative_slope = negative_slope
+        self.edge_dim = edge_dim
+        self.add_self_loops = add_self_loops
+        self.fill_value = fill_value
+        self.share_weights = share_weights
 
         if isinstance(in_channels, int):
             in_channels = (in_channels, in_channels)
         
-        self.relation_weight = nn.ModuleList()
-        self.relation_att = nn.ModuleList()
+        self.relation = nn.ModuleList()
+        
+
         
         self.att_weights = nn.ParameterList()
 
@@ -54,6 +66,7 @@ class HECGATConv(MessagePassing):
             self.relation_weight.append(nn.Linear(in_channels[0], out_channels * num_heads, bias=False))
             self.att_weights.append(nn.Parameter(torch.Tensor(1, num_heads, out_channels)))
         
+        self.att = Parameter(torch.empty(1, heads, out_channels))
 
         # linear layers for source and target node features transformation
         self.lin_l = nn.Linear(in_channels[0], out_channels * num_heads, bias=False)

@@ -86,10 +86,11 @@ class HECConvNet(nn.Module):
         self.JK = simple_JK
         print("relations:",relations)
     def forward(self, data):
+        pdb.set_trace()
         x, edge_index, edge_attr, batch, overall_attr,edge_type = data.x, data.edge_index, data.edge_attr, data.node_batch, data.overall , data.edge_type
         h_list = [x]
         for i, conv in enumerate(self.convs):
-            pdb.set_trace()
+            #pdb.set_trace()
             h = conv(h_list[i], edge_index,edge_weight = edge_attr,edge_type = edge_type )
             if i != self.num_layers - 1:
                 h = h.relu()
