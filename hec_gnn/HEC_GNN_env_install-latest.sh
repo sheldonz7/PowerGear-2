@@ -32,7 +32,7 @@ pip install tensorboard
 CUDA=cu121
 TORCH=2.2.0
 
-conda install pyg -c py
+conda install pyg -c pyg
 pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html 
 # pip3 install torch-scatter -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
 # pip3 install torch-sparse -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html

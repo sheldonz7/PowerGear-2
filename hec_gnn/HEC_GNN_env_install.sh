@@ -18,21 +18,22 @@ source ~/.bashrc
 conda create -n HEC_GNN python==3.8
 conda activate HEC_GNN
 # make sure pytorch version >=1.4.0
-conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=11.0 -c pytorch
+conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
 pip install tensorboard
 
 # command to install pytorch geometric, please refer to the official website for latest installation.
 #  https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html
-CUDA=cu113
-pip3 install torch-scatter -f https://pytorch-geometric.com/whl/torch-1.7.0+${CUDA}.html
-pip3 install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.7.0+${CUDA}.html
-# if error,please try:
-# pip3 install torch-scatter==2.0.6
-# pip3 install torch-sparse==0.6.9
-pip3 install torch-geometric==1.6.3
+CUDA=cu118
+TORCH=2.0.1
+#pip install torch-geometric==1.6.3
+conda install pyg -c pyg
 
-pip install torch-cluster -f https://pytorch-geometric.com/whl/torch-1.7.0+${CUDA}.html
-pip install torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.7.0+${CUDA}.html
+# pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
+# pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-${TOECH}+${CUDA}.html
+# pip install torch-cluster -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
+# pip install torch-spline-conv -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html
+# if error,please try:
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-1.7.0+cu110.html
 
 pip install requests
 
@@ -42,9 +43,9 @@ pip install tqdm
 # additional package required for ogb experiments
 pip install ogb
 ### check the version of ogb installed, if it is not the latest
-python -c "import ogb; print(ogb.__version__)"
+# python -c "import ogb; print(ogb.__version__)"
 # please update the version by running
-pip install -U ogb
+# pip install -U ogb
 
 # additional package required for dgl implementation
 # pip install dgl-cu102
