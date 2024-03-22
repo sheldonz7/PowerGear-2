@@ -225,7 +225,7 @@ if __name__ == "__main__":
     ############################
     PROJECT_ROOT  = __init__.ROOT_DIR 
     model_dir = os.path.abspath('')
-    dataset_dir = '{a}/dataset/graph_sample'.format(a = PROJECT_ROOT)
+    dataset_dir = '{a}/dataset/graph_sample/data-pyg2'.format(a = PROJECT_ROOT)
     run_dir = '{a}/seed<{z}>/fold_index<{s}>/HECCovNet_multi_relation<{h}>_{b}_{c}_{d}_{e}_{f}_overall<{i}>_edge_feature<{j}>_nodes_feature<{k}>_onevone<{g}>_train_set<{l}>_aggregate<{m}>_pooling<{n}>_loss<{o}>_JK<{p}>_seed<{q}>_k<{r}>_fold_index<{s}>'.format(z = seed_number,a = model_dir, b = num_conv_layers, c = hidden_channels, d = batch_size, e = lr,f = drop_out,h = relations,i = overall_dim_large,j = edge_feature,k = node_feature,g =onevone, l = train_dataset,m = aggr_type , n = pool_type,o = loss_func,p = simple_JK,q = seed_number,r = k,s = fold_index)
     if use_overall:
         run_dir = run_dir + '_overall'

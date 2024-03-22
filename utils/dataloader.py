@@ -2,13 +2,16 @@ import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
 from torch_geometric.data import Data
-from torch._six import container_abcs, string_classes, int_classes
+#from torch._six import container_abcs, string_classes, int_classes
+
+import _collections_abc as container_abcs
+string_classes = str
+int_classes = int
 
 import torch
 from torch import Tensor
 from torch_sparse import SparseTensor, cat
 import torch_geometric
-from torch_geometric.data import Data
 
 
 

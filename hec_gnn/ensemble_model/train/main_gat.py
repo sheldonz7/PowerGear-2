@@ -9,7 +9,11 @@ import sys
 import os
 import __init__
 from utils import dataloader
+
+from torch_geometric.loader import DataLoader
+
 from hec_gnn.conv.Conv import HECConv
+from hec_gnn.conv.GATv2Conv import GATv2Conv
 from utils.base_func import mape_loss,list_of_groups,split_dataset,generate_dataset,label_norm,lase_direction_enhance,masked_edge_index,masked_edge_attr,get_mean_and_std_overall,norm_overall
 # os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 import torch
@@ -43,7 +47,7 @@ class HECConvNet(nn.Module):
 
         
         # first layer
-        self.convs.append(GATConv(in_channels, hidden_channels,heads=num_heads, dropout=drop_out, edge_dim = edge_dim))
+        self.convs.append(GATv2Conv(in_channels, hidden_channels,heads=num_heads, dropout=drop_out, edge_dim = edge_dim))
         #self.bns.append(nn.BatchNorm1d(hidden_channels * num_heads))
         
         for i in range(1, num_layers-1):
@@ -83,7 +87,7 @@ class HECConvNet(nn.Module):
         x, edge_index, edge_attr, batch, overall_attr,edge_type = data.x, data.edge_index, data.edge_attr, data.node_batch, data.overall , data.edge_type
         h_list = [x]
         for i, conv in enumerate(self.convs):
-            h = conv(h_list[i], edge_index,edge_weight = edge_attr,edge_type = edge_type )
+            h = conv(h_list[i], edge_index,edge_weight = edge_attr)
             if i != self.num_layers - 1:
                 h = h.relu()
                 h = F.dropout(h, p=self.drop_out, training=self.training)

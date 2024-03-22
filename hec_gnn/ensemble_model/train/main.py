@@ -10,7 +10,7 @@ import os
 import __init__
 from utils import dataloader
 from hec_gnn.conv.Conv import HECConv
-from hec_gnn.conv.GAT import HECGATConv
+# from hec_gnn.conv.GAT import HECGATConv
 from utils.base_func import mape_loss,list_of_groups,split_dataset,generate_dataset,label_norm,lase_direction_enhance,masked_edge_index,masked_edge_attr,get_mean_and_std_overall,norm_overall
 # os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 import torch
