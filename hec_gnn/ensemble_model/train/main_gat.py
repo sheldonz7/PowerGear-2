@@ -13,8 +13,11 @@ from utils import dataloader
 from torch_geometric.loader import DataLoader
 
 from hec_gnn.conv.Conv import HECConv
-from hec_gnn.conv.GATv2Conv import GATv2Conv
+from hec_gnn.conv.GATConv import GATConv
 from utils.base_func import mape_loss,list_of_groups,split_dataset,generate_dataset,label_norm,lase_direction_enhance,masked_edge_index,masked_edge_attr,get_mean_and_std_overall,norm_overall
+
+import matplotlib.pyplot as plt
+
 # os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 import torch
 import torch.nn as nn
@@ -47,7 +50,7 @@ class HECConvNet(nn.Module):
 
         
         # first layer
-        self.convs.append(GATv2Conv(in_channels, hidden_channels,heads=num_heads, dropout=drop_out, edge_dim = edge_dim))
+        self.convs.append(GATConv(in_channels, hidden_channels,heads=num_heads, dropout=drop_out, edge_dim = edge_dim))
         #self.bns.append(nn.BatchNorm1d(hidden_channels * num_heads))
         
         for i in range(1, num_layers-1):
@@ -87,7 +90,7 @@ class HECConvNet(nn.Module):
         x, edge_index, edge_attr, batch, overall_attr,edge_type = data.x, data.edge_index, data.edge_attr, data.node_batch, data.overall , data.edge_type
         h_list = [x]
         for i, conv in enumerate(self.convs):
-            h = conv(h_list[i], edge_index,edge_weight = edge_attr)
+            h = conv(h_list[i], edge_index,edge_attr = edge_attr)
             if i != self.num_layers - 1:
                 h = h.relu()
                 h = F.dropout(h, p=self.drop_out, training=self.training)
@@ -245,8 +248,8 @@ if __name__ == "__main__":
     ############################
     PROJECT_ROOT  = __init__.ROOT_DIR 
     model_dir = os.path.abspath('')
-    dataset_dir = '{a}/dataset/graph_sample'.format(a = PROJECT_ROOT)
-    run_dir = '{a}/seed<{z}>/fold_index<{s}>/HECCovNet_multi_relation<{h}>_{b}_{c}_{d}_{e}_{f}_overall<{i}>_edge_feature<{j}>_nodes_feature<{k}>_onevone<{g}>_train_set<{l}>_aggregate<{m}>_pooling<{n}>_loss<{o}>_JK<{p}>_seed<{q}>_k<{r}>_fold_index<{s}>'.format(z = seed_number,a = model_dir, b = num_conv_layers, c = hidden_channels, d = batch_size, e = lr,f = drop_out,h = relations,i = overall_dim_large,j = edge_feature,k = node_feature,g =onevone, l = train_dataset,m = aggr_type , n = pool_type,o = loss_func,p = simple_JK,q = seed_number,r = k,s = fold_index)
+    dataset_dir = '{a}/dataset/graph_sample/data-pyg2'.format(a = PROJECT_ROOT)
+    run_dir = './train_results/gat/seed<{z}>/fold_index<{s}>/HECCovNet_multi_relation<{h}>_{b}_{c}_{d}_{e}_{f}_overall<{i}>_edge_feature<{j}>_nodes_feature<{k}>_onevone<{g}>_train_set<{l}>_aggregate<{m}>_pooling<{n}>_loss<{o}>_JK<{p}>_seed<{q}>_k<{r}>_fold_index<{s}>'.format(z = seed_number,a = model_dir, b = num_conv_layers, c = hidden_channels, d = batch_size, e = lr,f = drop_out,h = relations,i = overall_dim_large,j = edge_feature,k = node_feature,g =onevone, l = train_dataset,m = aggr_type , n = pool_type,o = loss_func,p = simple_JK,q = seed_number,r = k,s = fold_index)
     if use_overall:
         run_dir = run_dir + '_overall'
     if not os.path.isdir(run_dir):
@@ -346,7 +349,7 @@ if __name__ == "__main__":
         flog.write('loading best model with MAPE = {}\n'.format(best_mape))
     else:
         model = HECConvNet(in_channels = train_loader.dataset[0].num_node_features, hidden_channels = hidden_channels, 
-            num_layers = num_conv_layers, dim = edge_dim, use_overall = use_overall, overall_dim = overall_dim,drop_out = drop_out,pool_aggr = pool_type,overall_dim_large=overall_dim_large,relations= relations,aggregate=aggr_type,simple_JK=simple_JK).to(device)
+            num_layers = num_conv_layers, edge_dim = edge_dim, use_overall = use_overall, overall_dim = overall_dim,drop_out = drop_out,pool_aggr = pool_type,overall_dim_large=overall_dim_large,relations= relations,aggregate=aggr_type,simple_JK=simple_JK).to(device)
         print('constructing new model')
         flog.write('constructing new model\n')
     
@@ -367,6 +370,15 @@ if __name__ == "__main__":
     fm_wr.writerow(['epoch', 'training_mape', 'val_mape', 'test_mape'])
     best_epoch = 0
 
+    training_losses = []
+    validation_mses = []
+    validation_maes = []
+    validation_mapes = []
+    test_mses = []
+    test_maes = []
+    test_mapes = []
+    epoch_num = []
+
     for epoch in range(1, 2400+1):
         loss = model_train(model, train_loader, loss_func)
         val_mse, val_mae, val_mape, _ = model_test(model, val_loader)
@@ -386,8 +398,49 @@ if __name__ == "__main__":
             fm_wr.writerow([epoch, loss, val_mape, test_mape])
             fmodel.flush()
             
+        if epoch % 10 == 0:
+            training_losses.append(loss)
+            validation_mses.append(val_mse)
+            validation_maes.append(val_mae)
+            validation_mapes.append(val_mape)
+            test_mses.append(test_mse)
+            test_maes.append(test_mae)
+            test_mapes.append(test_mape)
+            epoch_num.append(epoch)
+
         if epoch % 400 == 0:
             torch.save(model.state_dict(), '{a}/epoch_{b}.pt'.format(a = run_dir, b = epoch))
+
+    fig, axs = plt.subplots(2, 2)
+
+    # LOSS    
+    if loss_func=='mape':
+        axs[0,0].title.set_text('Training, validation and test loss in MAPE')
+        axs[0,0].plot(epoch_num, training_losses, label="training loss")
+        axs[0,0].plot(epoch_num, validation_mapes, label="validation loss")
+        axs[0,0].plot(epoch_num, test_mapes, label="test loss")
+    elif loss_func=='mse':
+        axs[0,0].title.set_text('Training, validation and test loss in MSE')
+        axs[0,0].plot(epoch_num, training_losses, label="training loss")
+        axs[0,0].plot(epoch_num, validation_mses, label="validation loss")
+        axs[0,0].plot(epoch_num, test_mses, label="test loss")
+    else:
+        print("Can't display graph since loss type not supported")
+    axs[0,0].legend()
+    # MSE
+    axs[0,1].title.set_text('validation and test MSE')
+    axs[0,1].plot(epoch_num, validation_mses, label="validation mse")
+    axs[0,1].plot(epoch_num, test_mses, label="test mse")
+    axs[0,1].legend()
+
+    # MAE
+    axs[1,0].title.set_text('validation and test MAE')
+    axs[1,0].plot(epoch_num, validation_maes, label="validation mae")
+    axs[1,0].plot(epoch_num, test_maes, label="test mae")
+    axs[1,0].legend()
+    
+    plt.savefig(run_dir + 'foo.png')
+
 
     flog.close()
     fmodel.close()

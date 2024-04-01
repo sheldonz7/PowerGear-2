@@ -136,6 +136,7 @@ class GATConv(MessagePassing):
         dropout: float = 0.0,
         add_self_loops: bool = True,
         edge_dim: Optional[int] = None,
+        num_relation: Optional[int] = None,
         fill_value: Union[float, Tensor, str] = 'mean',
         bias: bool = True,
         **kwargs,
@@ -308,6 +309,9 @@ class GATConv(MessagePassing):
 
         # Next, we compute node-level attention coefficients, both for source
         # and target nodes (if present):
+
+        for i, 
+
         alpha_src = (x_src * self.att_src).sum(dim=-1)
         alpha_dst = None if x_dst is None else (x_dst * self.att_dst).sum(-1)
         alpha = (alpha_src, alpha_dst)
@@ -339,6 +343,8 @@ class GATConv(MessagePassing):
                                   size=size)
 
         # propagate_type: (x: OptPairTensor, alpha: Tensor)
+        for i, conv in enumerate(self.)
+
         out = self.propagate(edge_index, x=x, alpha=alpha, size=size)
 
         if self.concat:
